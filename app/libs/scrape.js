@@ -2,6 +2,7 @@ const util = require('./util');
 const redis = require('./redis');
 const logger = require('./logger');
 const { JSDOM } = require('jsdom');
+const { c } = require('tar');
 
 const getDocument = async function (url, cookie) {
   let body;
@@ -183,7 +184,22 @@ const _freeHDCity = async function (url, cookie) {
     throw new Error('疑似登录状态失效, 请检查 Cookie');
   }
   const state = d.querySelector('font.free') ||
-    d.querySelector('font.twoupfree');
+    d.querySelector('font.twoupfree') ||
+    d.querySelector('a[href="/pt?team=1"]') ||
+    d.querySelector('a[href="/pt?team=14"]') ||
+    d.querySelector('a[href="/pt?team=15"]') ||
+    d.querySelector('a[href="/pt?team=17"]');
+  return state;
+};
+
+const _freeHaiDan = async function (url, cookie) {
+  const d = await getDocument(url, cookie);
+  if (d.body.innerHTML.indexOf('userdetails') === -1) {
+    throw new Error('疑似登录状态失效, 请检查 Cookie');
+  }
+  torrent_id = new URL(url).searchParams.get('id')
+  const state = d.querySelector(`div#torrent-${torrent_id} img[class=pro_free]`) ||
+    d.querySelector(`div#torrent-${torrent_id} img[class=pro_free2up]`);
   return state;
 };
 
@@ -239,6 +255,7 @@ const freeWrapper = {
   'pt.sjtu.edu.cn': _freePuTao,
   'hdcity.leniter.org': _freeHDCity,
   'hdcity.city': _freeHDCity,
+  'www.haidan.video': _freeHaiDan,
   'www.empornium.is': _freeLuminance,
   'www.empornium.sx': _freeLuminance,
   'www.pixelcove.me': _freeLuminance,
@@ -273,6 +290,16 @@ const _hrTheGlory = async function (url, cookie) {
   return hr;
 };
 
+const _hrHaiDan = async function (url, cookie) {
+  const d = await getDocument(url, cookie);
+  if (d.body.innerHTML.indexOf('userdetails') === -1) {
+    throw new Error('疑似登录状态失效, 请检查 Cookie');
+  }
+  const torrent_id = new URL(url).searchParams.get('id');
+  const hr = d.querySelector(`div#torrent-${torrent_id} img[src*="hit_run"]`);
+  return hr;
+};
+
 const hrWrapper = {
   'www.hddolby.com': _hr,
   'hdhome.org': _hr,
@@ -283,6 +310,7 @@ const hrWrapper = {
   'totheglory.im': _hrTheGlory,
   'chdbits.co': _hrCHDBits,
   'ptchdbits.co': _hrCHDBits,
+  'www.haidan.video': _hrHaiDan,
   'audiences.me': _hr
 };
 
